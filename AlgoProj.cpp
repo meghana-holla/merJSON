@@ -1,6 +1,7 @@
 #include<iostream>
 #include<fstream>
 #include<string.h>
+#include<stdlib.h>
 using namespace std;
 #define MAX_NUMBER_OF_CHILDREN 10
 
@@ -12,27 +13,61 @@ typedef struct node
   char* value;
   struct node* innerNodes[MAX_NUMBER_OF_CHILDREN]; // list of nodes under it
   int no_of_children;
+  int json_id;
 } Node;
 
-char* readfile(int *i)
+void merge_it(Node* base, Node* head)
+{
+  if(head==NULL)
+  {
+    return;
+  }
+  for(int i=0; i<base->no_of_children; i++)
+  {
+    if(strcmp(base->innerNodes[i]->name,head->name)==0)
+    {
+        base->innerNodes[i]->json_id = 3;
+        for(int j=0; j<head->no_of_children; j++)
+        {
+          merge_it(base->innerNodes[i],head->innerNodes[j]);
+        }
+        return;
+    }
+  }
+  base->innerNodes[base->no_of_children++]=head;
+  Node* comment = initNode(base->depth);
+  comment->name=  (char*)malloc((strlen(base->name)+3)*sizeof(char));
+  comment->name[0] = '/';
+  comment->name[1] = '/';
+  strcpy(comment+2,base->name);
+}
+
+void merge(Node* base, Node* head)
+{
+  for(int j=0; j<head->no_of_children; j++)
+  {
+    merge_it(base,head->innerNodes[j]);
+  }
+}
+
+char* readfile(int *i, const char fileName[100])
 {
   char ch;
-	const char *fileName="people.json";
-	ifstream file;
-	file.open(fileName,ios::in);
+  ifstream file;
+  file.open(fileName,ios::in);
   char* string = (char*)malloc(100000);
   *i=0;
-	while (!file.eof())
-	{
-		file >> noskipws >> ch;
+  while (!file.eof())
+  {
+    file >> noskipws >> ch;
     if(ch!='\n')
     {
       string[*i] = ch;
       *i += 1;
     }
-	}
+  }
   string[*i] = '\0';
-	file.close();
+  file.close();
   return string;
 }
 
@@ -45,6 +80,7 @@ Node* initNode(int depth)
   }
   r->no_of_children=0;
   r->depth = depth;
+  r->json_id = 0;
   return r;
 }
 
@@ -66,7 +102,7 @@ Node* addNode(Node* parent, int flag, void* para)
   }
 }
 
-void genjson(char* json, int len, int* index, int depth, Node* parent)
+void genjson(char* json, int len, int* index, int depth, Node* parent, char json_id)
 {
   Node* child = initNode(depth);
 
@@ -113,6 +149,7 @@ void genjson(char* json, int len, int* index, int depth, Node* parent)
   name[t] = '\0';
   child->name = (char*)malloc(sizeof(name));
   strcpy(child->name,name);
+  child->json_id = json_id;
   addNode(parent,1,(void*)child);
   *index+=1;
 
@@ -173,46 +210,52 @@ void genjson(char* json, int len, int* index, int depth, Node* parent)
   }
 }
 
-/*
-
-typedef struct node
-{
-  int depth;
-  int flag; // tells us if the inner value is a list of nodes or string
-  char* name;
-  char* value;
-  struct node* innerNodes[MAX_NUMBER_OF_CHILDREN]; // list of nodes under it
-  int no_of_children;
-} Node;
-
-*/
-
 void print_tree(node* root)
 {
+  int count=0;
   if(root==NULL)
   {
     return;
   }
-  if(root->depth>-1) cout << string(root->depth*2,'\t') << root->name << ":" << root->value <<endl;
+  cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
+  if(root->no_of_children>0) cout<<"{";
+  else cout<< "\"" << root->value<<"\"";
   for(int i=0;i<root->no_of_children;i++)
   {
     print_tree(root->innerNodes[i]);
+    count++;
+    if(count<root->no_of_children) cout<< ",";
+    else cout<<"}";
   }
 }
 
+
 int main()
 {
-  int length;
-  char* fullfile = readfile(&length);
-  cout << fullfile << "\n"<< length << "\n";
+  int length1;
+  int length2;
+  char* fullfile1 = readfile(&length1,"base.json");
+  cout << fullfile1 << "\n"<< length1 << "\n";
+  char* fullfile2 = readfile(&length2,"head.json");
+  cout << fullfile2 << "\n"<< length2 << "\n";
 
   char name[100];
   char value[100];
-  int index=0;
-  Node* root = initNode(-1);
-  root->name = (char*)malloc(100);
-  strcpy(root->name,"~");
-  genjson(fullfile, length, &index, 0, root);
+  int index1=0;
+  int index2=0;
+
+  Node* base = initNode(-1);
+  base->name = (char*)malloc(10);
+  strcpy(base->name,"~");
+
+  Node* head = initNode(-1);
+  head->name = (char*)malloc(10);
+  strcpy(head->name,"~");
+
+  genjson(fullfile1, length1, &index1, 0, base);
+  genjson(fullfile2, length2, &index2, 0, head);
+
+  merge(base,head);
   cout << endl << endl << endl << endl;
-  print_tree(root);
+  print_tree(base);
 }

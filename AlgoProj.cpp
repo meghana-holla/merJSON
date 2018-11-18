@@ -14,6 +14,7 @@ typedef struct node
   struct node* innerNodes[MAX_NUMBER_OF_CHILDREN]; // list of nodes under it
   int no_of_children;
   char json_id[3];
+  int init_no;
 } Node;
 
 Node* initNode(int depth)
@@ -24,6 +25,7 @@ Node* initNode(int depth)
     r->innerNodes[i]=NULL;
   }
   r->no_of_children=0;
+  r->init_no=0;
   r->depth = depth;
   r->json_id[1]='\0';
   return r;
@@ -31,6 +33,7 @@ Node* initNode(int depth)
 
 void mergit(Node* base, Node* head)
 {
+  base->init_no = base->no_of_children;
   if(head==NULL)
   {
     return;
@@ -76,6 +79,7 @@ void mergit(Node* base, Node* head)
   comment->value = (char*)malloc(sizeof(char)*2);
   strcpy(comment->json_id,head->json_id);
   strcpy(comment->value,head->json_id);
+  cout << "THE JSON ID IS "<<comment->json_id<<"chararacter is "<< comment->json_id[0]<<"--";
   base->innerNodes[base->no_of_children++]=comment;
   base->innerNodes[base->no_of_children++]=head;
 }
@@ -249,7 +253,7 @@ void print_tree(node* root)
   {
     print_tree(root->innerNodes[i]);
     count++;
-    if(count<root->no_of_children) cout<< ","<< endl;
+    if(count<root->no_of_children) cout<< ","<< endl;//fix this
     else cout<<"}";
   }
 }
@@ -267,28 +271,34 @@ void print_split_tree(node* root,int mode)
     if(root->no_of_children>0) cout<<"{";
     else cout<< "\"" << root->value<<"\"";
   }
+  // cout<<"No of children = "<<root->no_of_children<<endl;
+  int i=0;
   if(mode==0)
   {
-	  for(int i=0;i<root->no_of_children;i++)
-	  {
-	  	if(root->innerNodes[i]->name[0]=='/' && root->innerNodes[i]->name[1]=='/')
-	  	{
-	  		if(root->innerNodes[i]->json_id[0]=='3' and root->no_of_children>i)
-	  		{
-	  			i+=1;
-	  			//print_split_tree(root->innerNodes[i+1],mode);
-	  		}
-	  		else if(root->innerNodes[i]->json_id[0]=='2' and root->no_of_children>=i+2)
-	  		{
-	  			i+=2;
-	  			//print_split_tree(root->innerNodes[i+2],mode);
-	  		}
-	  	}   
-	  	print_split_tree(root->innerNodes[i],0);
-	    count++;
-	    if(count<root->no_of_children) cout<< ","<< endl;
-	    else cout<<"}";
-		}	
+		for(int i=0;i<root->no_of_children;i++)
+		{
+			cout<<root->init_no<<" ";
+			if(root->innerNodes[i]->name[0]!='/' && root->innerNodes[i]->name[1]!='/')
+			{
+		  		print_split_tree(root->innerNodes[i],0);
+		  		count++;
+		  		if(count<root->init_no-1) cout<<",";
+			}
+		  	else if(root->innerNodes[i]->name[0]=='/' && root->innerNodes[i]->name[1]=='/')
+		  	{
+		  		if(root->innerNodes[i]->json_id[0]=='3' && i+1<root->no_of_children)
+		  		{
+		  			//?
+		  		}
+		  		else if(root->innerNodes[i]->json_id[0]=='2' && i+1<root->no_of_children)
+		  		{
+		  			i+=1;
+		  		}
+		  	}
+
+		}
+		if(root->no_of_children>0)
+		cout<<"}";
 	}
 }
 

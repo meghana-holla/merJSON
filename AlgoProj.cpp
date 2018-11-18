@@ -13,63 +13,8 @@ typedef struct node
   char* value;
   struct node* innerNodes[MAX_NUMBER_OF_CHILDREN]; // list of nodes under it
   int no_of_children;
-  int json_id;
+  char json_id[3];
 } Node;
-
-void merge_it(Node* base, Node* head)
-{
-  if(head==NULL)
-  {
-    return;
-  }
-  for(int i=0; i<base->no_of_children; i++)
-  {
-    if(strcmp(base->innerNodes[i]->name,head->name)==0)
-    {
-        base->innerNodes[i]->json_id = 3;
-        for(int j=0; j<head->no_of_children; j++)
-        {
-          merge_it(base->innerNodes[i],head->innerNodes[j]);
-        }
-        return;
-    }
-  }
-  base->innerNodes[base->no_of_children++]=head;
-  Node* comment = initNode(base->depth);
-  comment->name=  (char*)malloc((strlen(base->name)+3)*sizeof(char));
-  comment->name[0] = '/';
-  comment->name[1] = '/';
-  strcpy(comment+2,base->name);
-}
-
-void merge(Node* base, Node* head)
-{
-  for(int j=0; j<head->no_of_children; j++)
-  {
-    merge_it(base,head->innerNodes[j]);
-  }
-}
-
-char* readfile(int *i, const char fileName[100])
-{
-  char ch;
-  ifstream file;
-  file.open(fileName,ios::in);
-  char* string = (char*)malloc(100000);
-  *i=0;
-  while (!file.eof())
-  {
-    file >> noskipws >> ch;
-    if(ch!='\n')
-    {
-      string[*i] = ch;
-      *i += 1;
-    }
-  }
-  string[*i] = '\0';
-  file.close();
-  return string;
-}
 
 Node* initNode(int depth)
 {
@@ -80,8 +25,85 @@ Node* initNode(int depth)
   }
   r->no_of_children=0;
   r->depth = depth;
-  r->json_id = 0;
+  r->json_id[1]='\0';
   return r;
+}
+
+void mergit(Node* base, Node* head)
+{
+  if(head==NULL)
+  {
+    return;
+  }
+  for(int i=0; i<base->no_of_children; i++)
+  {
+    if(strcmp(base->innerNodes[i]->name,head->name)==0)
+    {
+      if(head->no_of_children==0)
+      {
+        char* temp = (char*)malloc(sizeof(char)*(strlen(head->name)+3)); //+2 for additional '/' +1 for '\0'
+        temp[0] = '/';
+        temp[1] = '/';
+        strcpy(temp+2,head->name);
+        free(head->name);
+        head->name = temp; //+3 for additional '/'
+        strcpy(head->json_id, "3"); //Set this to 3 as well so thta it doesnt have to go to
+        base->innerNodes[i]->json_id[0]='3';
+        for(int k=base->no_of_children-1; k>i; k--)
+        {
+          base->innerNodes[k]=base->innerNodes[k-1];
+        }
+        base->innerNodes[i]=head;
+        base->no_of_children++;
+      }
+      for(int j=0; j<head->no_of_children; j++)
+      {
+        strcpy(base->innerNodes[i]->json_id,"3\0");
+        mergit(base->innerNodes[i],head->innerNodes[j]);
+      }
+      return;
+    }
+  }
+  Node* comment = initNode(head->depth);
+  comment->name = (char*)malloc(sizeof(char)*(strlen(head->name)+3)); //+3 for additional '/'
+  comment->name[0] = '/';
+  comment->name[1] = '/';
+  strcpy(comment->name+2,head->name);
+  comment->name[strlen(head->name)+2]='\0';
+  comment->value = (char*)malloc(sizeof(char)*2);
+  strcpy(comment->json_id,head->json_id);
+  strcpy(comment->value,head->json_id);
+  base->innerNodes[base->no_of_children++]=comment;
+  base->innerNodes[base->no_of_children++]=head;
+}
+
+void merge(Node* base, Node* head)
+{
+  for(int j=0; j<head->no_of_children; j++)
+  {
+    mergit(base,head->innerNodes[j]);
+  }
+}
+
+char* readfile(int *i, const char fileName[100])
+{
+  char ch;
+	ifstream file;
+	file.open(fileName,ios::in);
+  char* string = (char*)malloc(100000);
+  *i=0;
+	while (!file.eof())
+	{
+		file >> noskipws >> ch;
+    if(ch!='\n')
+    {
+      string[*i] = ch;
+      *i += 1;
+    }
+	}
+  string[*i] = '\0';
+	file.close();
+  return string;
 }
 
 Node* addNode(Node* parent, int flag, void* para)
@@ -102,7 +124,7 @@ Node* addNode(Node* parent, int flag, void* para)
   }
 }
 
-void genjson(char* json, int len, int* index, int depth, Node* parent, char json_id)
+void genjson(char* json, int len, int* index, int depth, Node* parent,char json_id[2])
 {
   Node* child = initNode(depth);
 
@@ -149,7 +171,7 @@ void genjson(char* json, int len, int* index, int depth, Node* parent, char json
   name[t] = '\0';
   child->name = (char*)malloc(sizeof(name));
   strcpy(child->name,name);
-  child->json_id = json_id;
+  strcpy(child->json_id,json_id);
   addNode(parent,1,(void*)child);
   *index+=1;
 
@@ -165,7 +187,7 @@ void genjson(char* json, int len, int* index, int depth, Node* parent, char json
     if(json[*index]=='{')
     {
       *index+=1;
-      genjson(json, len, index, depth+1, child);
+      genjson(json, len, index, depth+1, child,json_id);
       *index-=1;
       inrec=1;
       break;
@@ -206,7 +228,7 @@ void genjson(char* json, int len, int* index, int depth, Node* parent, char json
   addNode(child,0,(void*)value);
   if(*index<len)
   {
-    return genjson(json, len, index, depth, parent);
+    return genjson(json, len, index, depth, parent,json_id);
   }
 }
 
@@ -217,18 +239,17 @@ void print_tree(node* root)
   {
     return;
   }
-  cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
+  if(root->depth>-1) cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
   if(root->no_of_children>0) cout<<"{";
   else cout<< "\"" << root->value<<"\"";
   for(int i=0;i<root->no_of_children;i++)
   {
     print_tree(root->innerNodes[i]);
     count++;
-    if(count<root->no_of_children) cout<< ",";
+    if(count<root->no_of_children) cout<< ","<< endl;
     else cout<<"}";
   }
 }
-
 
 int main()
 {
@@ -252,8 +273,8 @@ int main()
   head->name = (char*)malloc(10);
   strcpy(head->name,"~");
 
-  genjson(fullfile1, length1, &index1, 0, base);
-  genjson(fullfile2, length2, &index2, 0, head);
+  genjson(fullfile1, length1, &index1, 0, base,"1");
+  genjson(fullfile2, length2, &index2, 0, head,"2");
 
   merge(base,head);
   cout << endl << endl << endl << endl;

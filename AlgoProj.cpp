@@ -39,7 +39,7 @@ void mergit(Node* base, Node* head)
   {
     if(strcmp(base->innerNodes[i]->name,head->name)==0)
     {
-      if(head->no_of_children==0)
+      if(head->no_of_children==0 || (base->innerNodes[i]->no_of_children==0 && head->no_of_children!=0))
       {
         char* temp = (char*)malloc(sizeof(char)*(strlen(head->name)+3)); //+2 for additional '/' +1 for '\0'
         temp[0] = '/';
@@ -49,17 +49,20 @@ void mergit(Node* base, Node* head)
         head->name = temp; //+3 for additional '/'
         strcpy(head->json_id, "3"); //Set this to 3 as well so thta it doesnt have to go to
         base->innerNodes[i]->json_id[0]='3';
-        for(int k=base->no_of_children-1; k>i; k--)
+        for(int k=base->no_of_children; k>i; k--)
         {
           base->innerNodes[k]=base->innerNodes[k-1];
         }
         base->innerNodes[i]=head;
         base->no_of_children++;
       }
-      for(int j=0; j<head->no_of_children; j++)
+      else
       {
-        strcpy(base->innerNodes[i]->json_id,"3\0");
-        mergit(base->innerNodes[i],head->innerNodes[j]);
+	      for(int j=0; j<head->no_of_children; j++)
+	      {
+	        strcpy(base->innerNodes[i]->json_id,"3\0");
+	        mergit(base->innerNodes[i],head->innerNodes[j]);
+	      }
       }
       return;
     }
@@ -251,13 +254,51 @@ void print_tree(node* root)
   }
 }
 
+void print_split_tree(node* root,int mode)
+{
+  int count=0;
+  if(root==NULL)
+  {
+    return;
+  }
+  if(!(root->name[0]=='/' && root->name[1]=='/'))
+  {
+  	if(root->depth>-1) cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
+    if(root->no_of_children>0) cout<<"{";
+    else cout<< "\"" << root->value<<"\"";
+  }
+  if(mode==0)
+  {
+	  for(int i=0;i<root->no_of_children;i++)
+	  {
+	  	if(root->innerNodes[i]->name[0]=='/' && root->innerNodes[i]->name[1]=='/')
+	  	{
+	  		if(root->innerNodes[i]->json_id[0]=='3' and root->no_of_children>i)
+	  		{
+	  			i+=1;
+	  			//print_split_tree(root->innerNodes[i+1],mode);
+	  		}
+	  		else if(root->innerNodes[i]->json_id[0]=='2' and root->no_of_children>=i+2)
+	  		{
+	  			i+=2;
+	  			//print_split_tree(root->innerNodes[i+2],mode);
+	  		}
+	  	}   
+	  	print_split_tree(root->innerNodes[i],0);
+	    count++;
+	    if(count<root->no_of_children) cout<< ","<< endl;
+	    else cout<<"}";
+		}	
+	}
+}
+
 int main()
 {
   int length1;
   int length2;
-  char* fullfile1 = readfile(&length1,"base.json");
+  char* fullfile1 = readfile(&length1,"./merJSON/json_files/base.json");
   cout << fullfile1 << "\n"<< length1 << "\n";
-  char* fullfile2 = readfile(&length2,"head.json");
+  char* fullfile2 = readfile(&length2,"./merJSON/json_files/head.json");
   cout << fullfile2 << "\n"<< length2 << "\n";
 
   char name[100];
@@ -279,4 +320,6 @@ int main()
   merge(base,head);
   cout << endl << endl << endl << endl;
   print_tree(base);
+  cout<<endl<<endl; 
+  print_split_tree(base,0);
 }

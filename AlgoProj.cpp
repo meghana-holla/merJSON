@@ -269,46 +269,54 @@ void print_split_tree(node* root,int mode)
   {
   	if(root->depth>-1) cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
     if(root->no_of_children>0) cout<<"{";
-    else cout<< "\"" << root->value<<"\"";
+    else 
+    {
+      cout<< "\"" << root->value<<"\"";
+      if(root->no_of_children==0) cout<<", ";
+    }
   }
-  // cout<<"No of children = "<<root->no_of_children<<endl;
   int i=0;
-  if(mode==0)
-  {
 		for(int i=0;i<root->no_of_children;i++)
 		{
-			cout<<root->init_no<<" ";
-			if(root->innerNodes[i]->name[0]!='/' && root->innerNodes[i]->name[1]!='/')
+			if(root->innerNodes[i]->name[0]!='/' && root->innerNodes[i]->name[1]!='/' && (mode!=1 || root->innerNodes[i]->json_id[0]!='1'))
 			{
-		  		print_split_tree(root->innerNodes[i],0);
+		  		print_split_tree(root->innerNodes[i],mode);
 		  		count++;
-		  		if(count<root->init_no-1) cout<<",";
 			}
 		  	else if(root->innerNodes[i]->name[0]=='/' && root->innerNodes[i]->name[1]=='/')
 		  	{
-		  		if(root->innerNodes[i]->json_id[0]=='3' && i+1<root->no_of_children)
+          if(root->innerNodes[i]->json_id[0]=='3' && i+1<root->no_of_children)
 		  		{
+            if(mode==1)
+          {
+              strcpy(root->innerNodes[i]->name,root->innerNodes[i]->name+2);
+              print_split_tree(root->innerNodes[i],mode);
+              root->innerNodes[i]->name-=2;strcpy(root->innerNodes[i]->name,root->innerNodes[i]->name-2);
+              i+=1;
+          }
 		  			//?
 		  		}
 		  		else if(root->innerNodes[i]->json_id[0]=='2' && i+1<root->no_of_children)
 		  		{
-		  			i+=1;
+            if(mode==0)
+		  			  i+=1;
 		  		}
-		  	}
-
+	  	}
 		}
+
 		if(root->no_of_children>0)
 		cout<<"}";
 	}
-}
+
+
 
 int main()
 {
   int length1;
   int length2;
-  char* fullfile1 = readfile(&length1,"./merJSON/json_files/base.json");
+  char* fullfile1 = readfile(&length1,"./json_files/base.json");
   cout << fullfile1 << "\n"<< length1 << "\n";
-  char* fullfile2 = readfile(&length2,"./merJSON/json_files/head.json");
+  char* fullfile2 = readfile(&length2,"./json_files/head.json");
   cout << fullfile2 << "\n"<< length2 << "\n";
 
   char name[100];
@@ -331,5 +339,5 @@ int main()
   cout << endl << endl << endl << endl;
   print_tree(base);
   cout<<endl<<endl; 
-  print_split_tree(base,0);
+  print_split_tree(base,1);
 }

@@ -272,7 +272,7 @@ void print_split_tree(node* root,int mode)
     else 
     {
       cout<< "\"" << root->value<<"\"";
-      if(root->no_of_children==0) cout<<", ";
+      cout<<", ";
     }
   }
   int i=0;

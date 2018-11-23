@@ -1,14 +1,13 @@
 {
-  "naklu":{
+  "oni":{
     "swimming":"10sec",
     "speed":"60mph"
   },
-  "lol":{
-    "naklu":{
-      "swimming":"10sec",
-      "speed":"60mph"
-    },
-    "language":"C",
-    "subject":"PPL"
+  "naklu":"blah",
+  "ez":"not ez",
+  "life":
+  {
+    "haha":"joke",
+    "hehe":"sarcasm"
   }
 }

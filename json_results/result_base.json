@@ -1,21 +1,16 @@
 "~" : 
 {
-"//naklu" : "$",
-"naklu" : 
+"oni" :
     {
     "swimming" : "10sec",
     "speed" : "60mph"
     },
-"//lol" : "$",
-"lol" : 
+"naklu" : "blah",
+"ez" : "not ez",
+"//life" : "$",
+"life" :
     {
-    "//naklu" : "$",
-    "naklu" : 
-        {
-        "swimming" : "10sec",
-        "speed" : "60mph"
-        },
-    "language" : "C",
-    "subject" : "PPL"
+    "haha" : "joke",
+    "hehe" : "sarcasm"
     }
 }

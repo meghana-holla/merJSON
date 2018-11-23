@@ -1,29 +1,19 @@
 "~" : 
 {
-"//naklu" : "$",
-"naklu" : 
+"//oni" : "hello",
+"//naklu" : 
     {
-    "//age" : "#",
     "age" : "20",
-    "//iq" : "#",
     "iq" : "2000"
     },
-"//lol" : "$",
-"lol" : 
+"//ez" : "so ez",
+"//life" : "$",
+"life" : 
     {
-    "//naklu" : "$",
-    "naklu" : 
-        {
-        "//age" : "#",
-        "age" : "20",
-        "//iq" : "#",
-        "iq" : "2000"
-        },
-    "//age" : "#",
-    "age" : "lolz",
-    "//lolz" : "#",
-    "lolz" : "coolz"
+    "//haha" : "SUPER FUNNY",
+    "//omg" : "#",
+    "omg" : "surprised"
     },
-"//oni" : "#",
-"oni" : "hello"
+"//lol111" : "#",
+"lol111" : "ezz"
 }

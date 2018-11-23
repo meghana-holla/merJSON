@@ -47,11 +47,11 @@ void mergit(Node* base, Node* head)
         strcpy(temp+2,head->name);
         free(head->name);
         head->name = temp;
-        for(int k=base->no_of_children; k>i+1; k--)
+        for(int k=base->no_of_children; k>i; k--)
         {
           base->innerNodes[k]=base->innerNodes[k-1];
         }
-        base->innerNodes[i+1]=head;
+        base->innerNodes[i]=head;
         base->no_of_children++;
       }
       else
@@ -269,6 +269,7 @@ void setnodemode(node* root, char mode, int* check, char** nodemode, int depth, 
       }
       else
       {
+        *check = 0;
         nodemode[depth][i]='2';
       }
     }
@@ -306,11 +307,20 @@ void print_tree(node* root, char mode, char** nodemode, int depth, int index, FI
   cout << '\n';*/
   if(nodemode[depth][index]==mode || mode=='3' || nodemode[depth][index]=='3')
   {
+    if(nodemode[depth][index]=='2')
+    {
+      cout << "here";
+      nodemode[depth][index]='1';
+      print_tree(root,'3',nodemode,depth,index,file);
+      nodemode[depth][index]='2';
+      return;
+    }
     fputs("\"",file);
     cout << root->name;
     fputs(root->name,file);
     fputs("\"",file);
     fputs(" : ",file);//<<endl;
+
     if(root->no_of_children>0)
     {
       fputs("\n",file);

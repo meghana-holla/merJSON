@@ -1,35 +1,28 @@
 "~" : 
 {
-"//naklu" : "$",
-"naklu" : 
+"//oni" : "hello",
+"oni" : 
     {
     "swimming" : "10sec",
-    "speed" : "60mph",
-    "//age" : "#",
+    "speed" : "60mph"
+    },
+"//naklu" : 
+    {
     "age" : "20",
-    "//iq" : "#",
     "iq" : "2000"
     },
-"//lol" : "$",
-"lol" : 
+"naklu" : "blah",
+"//ez" : "so ez",
+"ez" : "not ez",
+"//life" : "$",
+"life" : 
     {
-    "//naklu" : "$",
-    "naklu" : 
-        {
-        "swimming" : "10sec",
-        "speed" : "60mph",
-        "//age" : "#",
-        "age" : "20",
-        "//iq" : "#",
-        "iq" : "2000"
-        },
-    "language" : "C",
-    "subject" : "PPL",
-    "//age" : "#",
-    "age" : "lolz",
-    "//lolz" : "#",
-    "lolz" : "coolz"
+    "//haha" : "SUPER FUNNY",
+    "haha" : "joke",
+    "hehe" : "sarcasm",
+    "//omg" : "#",
+    "omg" : "surprised"
     },
-"//oni" : "#",
-"oni" : "hello"
+"//lol111" : "#",
+"lol111" : "ezz"
 }

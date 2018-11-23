@@ -3,7 +3,7 @@
 #include<string.h>
 #include<stdlib.h>
 using namespace std;
-#define MAX_NUMBER_OF_CHILDREN 10
+#define MAX_NUMBER_OF_CHILDREN 100
 
 typedef struct node
 {
@@ -356,7 +356,7 @@ void print_tree(node* root, char mode, char** nodemode, int depth, int index, FI
       fputs("\n",file);
       for(int d=0; d<root->depth+1; d++)
       fputs("    ",file);
-      fputs("}",file);  
+      fputs("}",file);
     }
   }
 }
@@ -411,9 +411,9 @@ int main()
 {
   int length1;
   int length2;
-  char* fullfile1 = readfile(&length1,"base.json");
+  char* fullfile1 = readfile(&length1,"json_files/base.json");
   cout << fullfile1 << "\n"<< length1 << "\n";
-  char* fullfile2 = readfile(&length2,"head.json");
+  char* fullfile2 = readfile(&length2,"json_files/head.json");
   cout << fullfile2 << "\n"<< length2 << "\n";
 
   char name[100];
@@ -422,11 +422,11 @@ int main()
   int index2=0;
 
   FILE* file1;
-  file1 = fopen("resut1.json","w");
+  file1 = fopen("json_results/result_base.json","w");
   FILE* file2;
-  file2 = fopen("resut2.json","w");
+  file2 = fopen("json_results/result_head.json","w");
   FILE* file3;
-  file3 = fopen("resut3.json","w");
+  file3 = fopen("json_results/result_merged.json","w");
 
   Node* base = initNode(-1);
   base->name = (char*)malloc(10);

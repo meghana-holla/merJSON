@@ -13,8 +13,7 @@ typedef struct node
   char* value;
   struct node* innerNodes[MAX_NUMBER_OF_CHILDREN]; // list of nodes under it
   int no_of_children;
-  char json_id[3];
-  int init_no;
+  char json_id[2];
 } Node;
 
 Node* initNode(int depth)
@@ -25,7 +24,6 @@ Node* initNode(int depth)
     r->innerNodes[i]=NULL;
   }
   r->no_of_children=0;
-  r->init_no=0;
   r->depth = depth;
   r->json_id[1]='\0';
   return r;
@@ -33,7 +31,6 @@ Node* initNode(int depth)
 
 void mergit(Node* base, Node* head)
 {
-  base->init_no = base->no_of_children;
   if(head==NULL)
   {
     return;
@@ -42,30 +39,45 @@ void mergit(Node* base, Node* head)
   {
     if(strcmp(base->innerNodes[i]->name,head->name)==0)
     {
-      if(head->no_of_children==0 || (base->innerNodes[i]->no_of_children==0 && head->no_of_children!=0))
+      if(head->no_of_children==0 || base->innerNodes[i]->no_of_children == 0)
       {
-        char* temp = (char*)malloc(sizeof(char)*(strlen(head->name)+3)); //+2 for additional '/' +1 for '\0'
+        char* temp = (char*)malloc(sizeof(char)*(strlen(head->name)+3)); //+3 for additional '/'
         temp[0] = '/';
         temp[1] = '/';
         strcpy(temp+2,head->name);
         free(head->name);
-        head->name = temp; //+3 for additional '/'
-        strcpy(head->json_id, "3"); //Set this to 3 as well so thta it doesnt have to go to
-        base->innerNodes[i]->json_id[0]='3';
-        for(int k=base->no_of_children; k>i; k--)
+        head->name = temp;
+        for(int k=base->no_of_children; k>i+1; k--)
         {
           base->innerNodes[k]=base->innerNodes[k-1];
         }
-        base->innerNodes[i]=head;
+        base->innerNodes[i+1]=head;
         base->no_of_children++;
       }
       else
       {
-	      for(int j=0; j<head->no_of_children; j++)
-	      {
-	        strcpy(base->innerNodes[i]->json_id,"3\0");
-	        mergit(base->innerNodes[i],head->innerNodes[j]);
-	      }
+        base->innerNodes[i]->json_id[0]='3';
+        Node* comment = initNode(head->depth);
+        comment->name = (char*)malloc(sizeof(char)*(strlen(head->name)+3)); //+3 for additional '/'
+        comment->name[0] = '/';
+        comment->name[1] = '/';
+        strcpy(comment->name+2,head->name);
+        comment->name[strlen(head->name)+2]='\0';
+        comment->value = (char*)malloc(sizeof(char)*2);
+        strcpy(comment->json_id,"3\0");
+        comment->value[0]='$';
+        comment->value[1]='\0';
+        for(int k=base->no_of_children; k>i; k--)
+        {
+          base->innerNodes[k]=base->innerNodes[k-1];
+        }
+        base->innerNodes[i]=comment;
+        base->no_of_children++;
+        i+=1;
+        for(int j=0; j<head->no_of_children; j++)
+        {
+          mergit(base->innerNodes[i],head->innerNodes[j]);
+        }
       }
       return;
     }
@@ -78,8 +90,8 @@ void mergit(Node* base, Node* head)
   comment->name[strlen(head->name)+2]='\0';
   comment->value = (char*)malloc(sizeof(char)*2);
   strcpy(comment->json_id,head->json_id);
-  strcpy(comment->value,head->json_id);
-  cout << "THE JSON ID IS "<<comment->json_id<<"chararacter is "<< comment->json_id[0]<<"--";
+  comment->value[0]='#';
+  comment->value[1]='\0';
   base->innerNodes[base->no_of_children++]=comment;
   base->innerNodes[base->no_of_children++]=head;
 }
@@ -239,74 +251,159 @@ void genjson(char* json, int len, int* index, int depth, Node* parent,char json_
   }
 }
 
-void print_tree(node* root)
+void setnodemode(node* root, char mode, int* check, char** nodemode, int depth, int i)
 {
-  int count=0;
-  if(root==NULL)
+  if(*check==0)
   {
-    return;
+    if(root->name[0]=='/' && root->name[1]=='/')
+    {
+      if(root->no_of_children==0 && root->value[0]=='#')
+      {
+        *check=1;
+        nodemode[depth][i]='2';
+      }
+      else if(root->no_of_children==0 && root->value[0]=='$')
+      {
+        *check=1;
+        nodemode[depth][i]='3';
+      }
+      else
+      {
+        nodemode[depth][i]='2';
+      }
+    }
+    else
+    {
+      nodemode[depth][i]='1';
+    }
   }
-  if(root->depth>-1) cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
-  if(root->no_of_children>0) cout<<"{";
-  else cout<< "\"" << root->value<<"\"";
-  for(int i=0;i<root->no_of_children;i++)
+  else
   {
-    print_tree(root->innerNodes[i]);
-    count++;
-    if(count<root->no_of_children) cout<< ","<< endl;//fix this
-    else cout<<"}";
+    *check=0;
+    nodemode[depth][i]=nodemode[depth][i-1];
   }
 }
 
-void print_split_tree(node* root,int mode)
+void print_tree(node* root, char mode, char** nodemode, int depth, int index, FILE* file) //flag is for checking for comments type
 {
   int count=0;
   if(root==NULL)
   {
     return;
   }
-  if(!(root->name[0]=='/' && root->name[1]=='/'))
+  int check=0;
+  nodemode[depth+1] = (char*)malloc(root->no_of_children*sizeof(char));
+  nodemode[depth+1][0]='0';
+  for(int i=0; i<root->no_of_children; i++)
   {
-  	if(root->depth>-1) cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
-    if(root->no_of_children>0) cout<<"{";
-    else 
+    setnodemode(root->innerNodes[i],mode,&check,nodemode,depth+1,i);
+  }
+  /*cout << depth+1;
+  for(int i=0; i<root->no_of_children; i++)
+  {
+    cout << nodemode[depth+1][i] << " ";
+  }
+  cout << '\n';*/
+  if(nodemode[depth][index]==mode || mode=='3' || nodemode[depth][index]=='3')
+  {
+    fputs("\"",file);
+    cout << root->name;
+    fputs(root->name,file);
+    fputs("\"",file);
+    fputs(" : ",file);//<<endl;
+    if(root->no_of_children>0)
     {
-      cout<< "\"" << root->value<<"\"";
-      cout<<", ";
+      fputs("\n",file);
+      for(int d=0; d<root->depth+1; d++)
+      fputs("    ",file);
+      fputs("{\n",file);
+      for(int d=0; d<root->depth+1; d++)
+      fputs("    ",file);
+    }
+    else
+    {
+      fputs("\"",file);
+      fputs(root->value,file);
+      fputs("\"",file);
+    }
+    for(int i=0;i<root->no_of_children;i++)
+    {
+      print_tree(root->innerNodes[i],mode,nodemode,depth+1,i,file);
+      if(nodemode[depth+1][i]==mode || mode=='3' || nodemode[depth+1][i]=='3')
+      {
+        int flag=0;
+        for(int j=i+1;j<root->no_of_children;j++)
+        {
+          if(nodemode[depth+1][j]==mode || mode=='3' || nodemode[depth+1][j]=='3')
+          {
+            flag=1;
+            break;
+          }
+        }
+        count++;
+        if(flag && count<root->no_of_children)
+        {
+            fputs(",",file);
+            fputs("\n",file);
+            for(int d=0; d<root->depth+1; d++)
+            fputs("    ",file);
+        }
+      }
+    }
+
+    if(root->no_of_children>0)
+    {
+      fputs("\n",file);
+      for(int d=0; d<root->depth+1; d++)
+      fputs("    ",file);
+      fputs("}",file);  
     }
   }
-  int i=0;
-		for(int i=0;i<root->no_of_children;i++)
-		{
-			if(root->innerNodes[i]->name[0]!='/' && root->innerNodes[i]->name[1]!='/' && (mode!=1 || root->innerNodes[i]->json_id[0]!='1'))
-			{
-		  		print_split_tree(root->innerNodes[i],mode);
-		  		count++;
-			}
-		  	else if(root->innerNodes[i]->name[0]=='/' && root->innerNodes[i]->name[1]=='/')
-		  	{
-          if(root->innerNodes[i]->json_id[0]=='3' && i+1<root->no_of_children)
-		  		{
-            if(mode==1)
-          {
-              strcpy(root->innerNodes[i]->name,root->innerNodes[i]->name+2);
-              print_split_tree(root->innerNodes[i],mode);
-              root->innerNodes[i]->name-=2;strcpy(root->innerNodes[i]->name,root->innerNodes[i]->name-2);
-              i+=1;
-          }
-		  			//?
-		  		}
-		  		else if(root->innerNodes[i]->json_id[0]=='2' && i+1<root->no_of_children)
-		  		{
-            if(mode==0)
-		  			  i+=1;
-		  		}
-	  	}
-		}
+}
 
-		if(root->no_of_children>0)
-		cout<<"}";
-	}
+void print_tree_t(node* root, char mode)
+{
+  int count=0;
+  if(root==NULL)
+  {
+    return;
+  }
+
+  if(root->json_id[0]==mode || mode=='3' || root->json_id[0]=='3')
+  {
+    cout << "\"" <<root->name <<"\"" << " : ";//<<endl;
+    if(root->no_of_children>0)
+    {
+      cout<< "\n" << string((root->depth+1)*5,' ');
+      cout<<"{";
+    }
+    else cout<< "\"" << root->value<<"\"";
+    for(int i=0;i<root->no_of_children;i++)
+    {
+      print_tree_t(root->innerNodes[i],mode);
+      if(root->innerNodes[i]->json_id[0]==mode || mode=='3' || root->innerNodes[i]->json_id[0]=='3')
+      {
+        int flag=0;
+        for(int j=i+1;j<root->no_of_children;j++)
+        {
+          if(root->innerNodes[j]->json_id[0]==mode || mode=='3' || root->innerNodes[j]->json_id[0]=='3')
+          {
+            flag=1;
+            break;
+          }
+        }
+        count++;
+        if(flag && count<root->no_of_children)
+        {
+            cout<< ","<< "\n" << string((root->depth+1)*5,' ');
+        }
+      }
+    }
+
+    if(root->no_of_children>0)
+    cout<<"}";
+  }
+}
 
 
 
@@ -314,9 +411,9 @@ int main()
 {
   int length1;
   int length2;
-  char* fullfile1 = readfile(&length1,"./json_files/base.json");
+  char* fullfile1 = readfile(&length1,"base.json");
   cout << fullfile1 << "\n"<< length1 << "\n";
-  char* fullfile2 = readfile(&length2,"./json_files/head.json");
+  char* fullfile2 = readfile(&length2,"head.json");
   cout << fullfile2 << "\n"<< length2 << "\n";
 
   char name[100];
@@ -324,20 +421,54 @@ int main()
   int index1=0;
   int index2=0;
 
+  FILE* file1;
+  file1 = fopen("resut1.json","w");
+  FILE* file2;
+  file2 = fopen("resut2.json","w");
+  FILE* file3;
+  file3 = fopen("resut3.json","w");
+
   Node* base = initNode(-1);
   base->name = (char*)malloc(10);
   strcpy(base->name,"~");
+  strcpy(base->json_id,"3");
 
   Node* head = initNode(-1);
   head->name = (char*)malloc(10);
   strcpy(head->name,"~");
+  strcpy(head->json_id,"3");
 
   genjson(fullfile1, length1, &index1, 0, base,"1");
   genjson(fullfile2, length2, &index2, 0, head,"2");
 
   merge(base,head);
   cout << endl << endl << endl << endl;
-  print_tree(base);
-  cout<<endl<<endl; 
-  print_split_tree(base,1);
+
+  char* nodemode[100];
+  int check=0;
+  nodemode[0] = (char*)malloc(sizeof(char));
+  nodemode[0][0]='3';
+
+  cout << '\n';
+
+  cout << "String1 ";
+  print_tree(base,'1',nodemode,0,0,file1);
+
+  cout << "\n\nCorrect1 ";
+  print_tree_t(base,'1');
+
+  cout << "\n\nString2 ";
+  print_tree(base,'2',nodemode,0,0,file2);
+
+  cout << "\n\nCorrect2 ";
+  print_tree_t(base,'2');
+
+  cout << "\n\nString3 ";
+  print_tree(base,'3',nodemode,0,0,file3);
+
+  cout << "\n\nCorrect3 ";
+  print_tree_t(base,'3');
+
+  int depth=1;
+
 }

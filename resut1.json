@@ -1,0 +1,21 @@
+"~" : 
+{
+"//naklu" : "$",
+"naklu" : 
+    {
+    "swimming" : "10sec",
+    "speed" : "60mph"
+    },
+"//lol" : "$",
+"lol" : 
+    {
+    "//naklu" : "$",
+    "naklu" : 
+        {
+        "swimming" : "10sec",
+        "speed" : "60mph"
+        },
+    "language" : "C",
+    "subject" : "PPL"
+    }
+}

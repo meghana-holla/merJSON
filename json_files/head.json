@@ -1,13 +1,15 @@
 {
-  "maggie":"is a CUCHIE.",
   "naklu":{
-    "height":"20",
-    "weight":"53",
-    "best friend":{"Arvind":"NPS"}
+    "age":"20",
+    "iq":"2000"
   },
-  "feti":{
-    "swimming":"20sec",
-    "weight":"51",
-    "best friend":{"Meghana":"Amazing"}
+  "oni":"hello",
+  "lol":{
+    "naklu":{
+      "age":"20",
+      "iq":"2000"
+    },
+    "age":"lolz",
+    "lolz":"coolz"
   }
 }
